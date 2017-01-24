@@ -1,0 +1,298 @@
+import derelict.opencl.cl;
+import core.stdc.stdio;
+import core.stdc.stdlib;
+import std.conv;
+
+
+string err_code (cl_int err_in) {
+    switch (err_in) {
+    case CL_SUCCESS:
+	return "CL_SUCCESS";
+    case CL_DEVICE_NOT_FOUND:
+	return "CL_DEVICE_NOT_FOUND";
+    case CL_DEVICE_NOT_AVAILABLE:
+	return "CL_DEVICE_NOT_AVAILABLE";
+    case CL_COMPILER_NOT_AVAILABLE:
+	return "CL_COMPILER_NOT_AVAILABLE";
+    case CL_MEM_OBJECT_ALLOCATION_FAILURE:
+	return "CL_MEM_OBJECT_ALLOCATION_FAILURE";
+    case CL_OUT_OF_RESOURCES:
+	return "CL_OUT_OF_RESOURCES";
+    case CL_OUT_OF_HOST_MEMORY:
+	return "CL_OUT_OF_HOST_MEMORY";
+    case CL_PROFILING_INFO_NOT_AVAILABLE:
+	return "CL_PROFILING_INFO_NOT_AVAILABLE";
+    case CL_MEM_COPY_OVERLAP:
+	return "CL_MEM_COPY_OVERLAP";
+    case CL_IMAGE_FORMAT_MISMATCH:
+	return "CL_IMAGE_FORMAT_MISMATCH";
+    case CL_IMAGE_FORMAT_NOT_SUPPORTED:
+	return "CL_IMAGE_FORMAT_NOT_SUPPORTED";
+    case CL_BUILD_PROGRAM_FAILURE:
+	return "CL_BUILD_PROGRAM_FAILURE";
+    case CL_MAP_FAILURE:
+	return "CL_MAP_FAILURE";
+    case CL_MISALIGNED_SUB_BUFFER_OFFSET:
+	return "CL_MISALIGNED_SUB_BUFFER_OFFSET";
+    case CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST:
+	return "CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST";
+    case CL_INVALID_VALUE:
+	return "CL_INVALID_VALUE";
+    case CL_INVALID_DEVICE_TYPE:
+	return "CL_INVALID_DEVICE_TYPE";
+    case CL_INVALID_PLATFORM:
+	return "CL_INVALID_PLATFORM";
+    case CL_INVALID_DEVICE:
+	return "CL_INVALID_DEVICE";
+    case CL_INVALID_CONTEXT:
+	return "CL_INVALID_CONTEXT";
+    case CL_INVALID_QUEUE_PROPERTIES:
+	return "CL_INVALID_QUEUE_PROPERTIES";
+    case CL_INVALID_COMMAND_QUEUE:
+	return "CL_INVALID_COMMAND_QUEUE";
+    case CL_INVALID_HOST_PTR:
+	return "CL_INVALID_HOST_PTR";
+    case CL_INVALID_MEM_OBJECT:
+	return "CL_INVALID_MEM_OBJECT";
+    case CL_INVALID_IMAGE_FORMAT_DESCRIPTOR:
+	return "CL_INVALID_IMAGE_FORMAT_DESCRIPTOR";
+    case CL_INVALID_IMAGE_SIZE:
+	return "CL_INVALID_IMAGE_SIZE";
+    case CL_INVALID_SAMPLER:
+	return "CL_INVALID_SAMPLER";
+    case CL_INVALID_BINARY:
+	return "CL_INVALID_BINARY";
+    case CL_INVALID_BUILD_OPTIONS:
+	return "CL_INVALID_BUILD_OPTIONS";
+    case CL_INVALID_PROGRAM:
+	return "CL_INVALID_PROGRAM";
+    case CL_INVALID_PROGRAM_EXECUTABLE:
+	return "CL_INVALID_PROGRAM_EXECUTABLE";
+    case CL_INVALID_KERNEL_NAME:
+	return "CL_INVALID_KERNEL_NAME";
+    case CL_INVALID_KERNEL_DEFINITION:
+	return "CL_INVALID_KERNEL_DEFINITION";
+    case CL_INVALID_KERNEL:
+	return "CL_INVALID_KERNEL";
+    case CL_INVALID_ARG_INDEX:
+	return "CL_INVALID_ARG_INDEX";
+    case CL_INVALID_ARG_VALUE:
+	return "CL_INVALID_ARG_VALUE";
+    case CL_INVALID_ARG_SIZE:
+	return "CL_INVALID_ARG_SIZE";
+    case CL_INVALID_KERNEL_ARGS:
+	return "CL_INVALID_KERNEL_ARGS";
+    case CL_INVALID_WORK_DIMENSION:
+	return "CL_INVALID_WORK_DIMENSION";
+    case CL_INVALID_WORK_GROUP_SIZE:
+	return "CL_INVALID_WORK_GROUP_SIZE";
+    case CL_INVALID_WORK_ITEM_SIZE:
+	return "CL_INVALID_WORK_ITEM_SIZE";
+    case CL_INVALID_GLOBAL_OFFSET:
+	return "CL_INVALID_GLOBAL_OFFSET";
+    case CL_INVALID_EVENT_WAIT_LIST:
+	return "CL_INVALID_EVENT_WAIT_LIST";
+    case CL_INVALID_EVENT:
+	return "CL_INVALID_EVENT";
+    case CL_INVALID_OPERATION:
+	return "CL_INVALID_OPERATION";
+    case CL_INVALID_GL_OBJECT:
+	return "CL_INVALID_GL_OBJECT";
+    case CL_INVALID_BUFFER_SIZE:
+	return "CL_INVALID_BUFFER_SIZE";
+    case CL_INVALID_MIP_LEVEL:
+	return "CL_INVALID_MIP_LEVEL";
+    case CL_INVALID_GLOBAL_WORK_SIZE:
+	return "CL_INVALID_GLOBAL_WORK_SIZE";
+    case CL_INVALID_PROPERTY:
+	return "CL_INVALID_PROPERTY";
+
+    default:
+	return "UNKNOWN ERROR";
+    }
+}
+
+enum LENGTH = 1024;
+enum DEVICE = CL_DEVICE_TYPE_DEFAULT;
+enum TOL = 0.001;
+
+void checkError (cl_int err, const char * operation) {
+    if (err != CL_SUCCESS) {
+	fprintf(stderr, "Error during operation '%s', ", operation);
+        fprintf(stderr, "Error code was %s (%d)\n",  err_code (err).ptr, err);
+    }
+}
+		  
+
+const char* KernelSource = 
+    ("__kernel void vadd (__global const float * a, __global const float * b, __global float * out, unsigned int count) {" 
+    "int i = get_global_id (0);"					
+    "if (i < count)"							
+    "out [i] = a[i] + b[i];    "					
+     "}\n").ptr;
+
+
+int main() {
+    // Load the OpenCL library.
+    DerelictCL.load();
+
+    float []      h_a;
+    h_a.length = LENGTH;
+
+    float  []     h_b;
+    h_b.length = LENGTH;
+    
+    float []       h_c;
+    h_c.length = LENGTH;
+
+    uint correct;           // number of correct results
+
+    size_t global;                  // global domain size
+
+    cl_device_id     device_id;     // compute device id
+    cl_context       context;       // compute context
+    cl_command_queue commands;      // compute command queue
+    cl_program       program;       // compute program
+    cl_kernel        ko_vadd;       // compute kernel
+
+    cl_mem d_a;                     // device memory used for the input  a vector
+    cl_mem d_b;                     // device memory used for the input  b vector
+    cl_mem d_c;                     // device memory used for the output c vector
+
+    // Fill vectors a and b with random float values
+    int i = 0;
+    int count = LENGTH;
+    for(i = 0; i < count; i++){
+        h_a[i] = rand() / cast (float)RAND_MAX;
+        h_b[i] = rand() / cast (float)RAND_MAX;
+    }
+
+    // Set up platform and GPU device
+
+    cl_uint numPlatforms;
+
+    // Find number of platforms
+    auto err = clGetPlatformIDs(0, null, &numPlatforms);
+    checkError(err, "Finding platforms");
+    if (numPlatforms == 0)
+	{
+	    printf("Found 0 platforms!\n");
+	    return EXIT_FAILURE;
+	}
+
+    // Get all platforms
+    cl_platform_id [] Platform;
+    Platform.length = numPlatforms;
+    
+    err = clGetPlatformIDs(numPlatforms, Platform.ptr, null);
+    checkError(err, "Getting platforms");
+
+    // Secure a GPU
+    for (i = 0; i < numPlatforms; i++)
+	{
+	    err = clGetDeviceIDs(Platform[i], DEVICE, 1, &device_id, null);
+	    if (err == CL_SUCCESS)   {
+		break;
+	    }
+	}
+
+    if (device_id == null)
+        checkError(err, "Finding a device");
+
+    // Create a compute context
+    context = clCreateContext (null, 1, &device_id, null, null, &err); 
+    checkError(err, "Creating context");
+
+    // Create a command queue
+    commands = clCreateCommandQueue(context, device_id, 0, &err); 
+    checkError(err, "Creating command queue");
+
+    // Create the compute program from the source buffer
+    program = clCreateProgramWithSource (context, 1, &(KernelSource), null, &err);
+    checkError(err, "Creating program");
+
+    // Build the program
+    err = clBuildProgram(program, 0, null, null, null, null);
+    if (err != CL_SUCCESS) {
+	size_t len;
+	char  [2048] buffer;
+	clGetProgramBuildInfo (program, device_id, CL_PROGRAM_BUILD_LOG, buffer.sizeof, buffer.ptr, &len);
+	printf ("%s\n", buffer.ptr);
+    }
+
+      
+    // Create the compute kernel from the program
+    ko_vadd = clCreateKernel (program, "vadd", &err);
+    checkError(err, "Creating kernel");
+
+    // Create the input (a, b) and output (c) arrays in device memory
+    d_a  = clCreateBuffer (context, CL_MEM_READ_ONLY, float.sizeof * count, null, null);
+    checkError(err, "Creating buffer d_a");
+    
+    d_b  = clCreateBuffer (context, CL_MEM_READ_ONLY, float.sizeof * count, null, null);
+    checkError(err, "Creating buffer d_b");
+    
+    d_c  = clCreateBuffer (context, CL_MEM_WRITE_ONLY, float.sizeof * count, null, null);
+    checkError(err, "Creating buffer d_c");
+
+    // Write a and b vectors into compute device memory
+    err = clEnqueueWriteBuffer (commands, d_a, CL_FALSE, 0, float.sizeof * count, h_a.ptr, 0, null, null);
+    checkError(err, "Copying h_a to device at d_a");
+
+    err = clEnqueueWriteBuffer (commands, d_b, CL_FALSE, 0, float.sizeof * count, h_b.ptr, 0, null, null);
+    checkError(err, "Copying h_b to device at d_b");
+
+    // Set the arguments to our compute kernel
+    err  = clSetKernelArg (ko_vadd, 0, cl_mem.sizeof, &d_a); 
+    err |= clSetKernelArg (ko_vadd, 1, cl_mem.sizeof, &d_b); 
+    err |= clSetKernelArg (ko_vadd, 2, cl_mem.sizeof, &d_c);
+    err |=  clSetKernelArg (ko_vadd, 3, uint.sizeof, &count);
+    checkError(err, "Setting kernel arguments");
+
+    // Execute the kernel over the entire range of our 1d input data set
+    // letting the OpenCL runtime choose the work-group size
+    global = count;
+    err = clEnqueueNDRangeKernel (commands, ko_vadd, 1, null, &global, null, 0, null, null); 
+    checkError(err, "Enqueueing kernel");
+
+    // Wait for the commands to complete before stopping the timer
+    err = clFinish (commands);
+    checkError(err, "Waiting for kernel to finish");
+
+    // Read back the results from the compute device
+    err = clEnqueueReadBuffer (commands, d_c, CL_TRUE, 0,  float.sizeof * count, h_c.ptr, 0, null, null);
+    if (err != CL_SUCCESS)
+	{
+	    printf("Error: Failed to read output array!\n%s\n", err_code(err).ptr);
+	    exit(1);
+	}
+
+    // Test the results
+    correct = 0;
+    float tmp;
+
+    for(i = 0; i < count; i++)
+	{
+	    tmp = h_a[i] + h_b[i];     // assign element i of a+b to tmp
+	    tmp -= h_c[i];             // compute deviation of expected and output result
+	    if(tmp*tmp < TOL*TOL)        // correct if square deviation is less than tolerance squared
+		correct++;
+	    else {
+		printf(" tmp %f h_a %f h_b %f h_c %f \n",tmp, h_a[i], h_b[i], h_c[i]);
+	    }
+	}
+
+    // summarise results
+    printf("C = A+B:  %d out of %d results were correct.\n", correct, count);
+
+    // cleanup then shutdown
+    clReleaseMemObject(d_a);
+    clReleaseMemObject(d_b);
+    clReleaseMemObject(d_c);
+    clReleaseProgram(program);
+    clReleaseKernel(ko_vadd);
+    clReleaseCommandQueue(commands);
+    clReleaseContext(context);
+    
+    return 0;    
+}
