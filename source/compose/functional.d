@@ -1,6 +1,5 @@
 module compose.functional;
 
-
 // skip all ASCII chars except a..z, A..Z, 0..9, '_' and '.'.
 uint _ctfeSkipOp(ref string op)
 {
@@ -10,7 +9,7 @@ uint _ctfeSkipOp(ref string op)
     while (op.length)
 	{
 	    immutable front = op[0];
-	    if (front.isASCII() && !(front.isAlphaNum() || front == '_' || front == '.'))
+	    if (front.isASCII() && !(front.isAlphaNum() || front == '_' || front == '.' || front == '&'))
 		op = op[1..$];
 	    else
 		break;
@@ -24,12 +23,16 @@ uint _ctfeSkipInteger(ref string op)
     if (!__ctfe) assert(false);
     import std.ascii : isDigit;
     immutable oldLength = op.length;
+    bool dot = false;
     while (op.length)
 	{
 	    immutable front = op[0];
 	    if (front.isDigit())
 		op = op[1..$];
-	    else
+	    else if (front == '.' && op.length > 1 && op [1].isDigit && !dot) {
+		op = op[2 .. $];
+		dot = true;
+	    } else 
 		break;
 	}
     return oldLength != op.length;

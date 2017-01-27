@@ -51,8 +51,8 @@ class Map (string op) : Skeleton {
 	
 	static string toIndexable (string begin, string end) () {
 	    // TODO verifier que l'operateur est correct
-	    /*	    static if (!end._ctfeMatchUnary ("a"))
-	     static assert (false, end ~ " n'est pas une operateur unaire");*/
+	    static if (!end._ctfeMatchUnary ("a"))
+	     static assert (false, end ~ " n'est pas une operateur unaire");
 	    static if (end.length == 0) {
 		static if (begin.indexOf ('a') == -1)
 		    static assert (false, "a necessaire dans le lambda");
