@@ -9,6 +9,11 @@ class Vector (T) : Passable {
 	this._device = device;
 	this._h_datas.length = size;
     }
+
+    this (Device device, T [] data) {
+	this._device = device;
+	this._h_datas = data;
+    }
     
     ref T opIndex (ulong index) {
 	if (!this._isLocal) {

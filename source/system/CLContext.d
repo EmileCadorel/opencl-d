@@ -10,10 +10,11 @@ class CLContext {
 
     private enum DEVICE = CL_DEVICE_TYPE_DEFAULT;
     
-    void init () {
+    void init () {	
 	DerelictCL.load ();
 	this.initDevices ();
 	this.initContext ();
+	this._isInit = true;
     }
     
     cl_context context () {
@@ -26,6 +27,10 @@ class CLContext {
 	}
     }    
 
+    bool isInit () {
+	return this._isInit;
+    }
+    
     Device [] devices () {
 	return this._devices;
     }
@@ -70,6 +75,7 @@ class CLContext {
     private cl_device_id [] _deviceIds;
     private cl_platform_id [] _platforms;    
     private cl_uint _nbPlatforms;
+    private bool _isInit = false;
     
     mixin Singleton!CLContext;
     
