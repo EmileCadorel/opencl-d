@@ -5,3 +5,6 @@ __dummy.html
 *.obj
 *#
 dopencl
+sample/Map/map
+sample/Generate/generate
+*.a

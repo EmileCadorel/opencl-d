@@ -1,32 +1,17 @@
-import system.CLContext, system.Kernel;
-import data.Vector;
-import core.stdc.stdio;
-import core.stdc.stdlib;
-import std.format, std.stdio;
-import std.datetime, std.conv;
-import compose.Skeleton, compose.Map;
+import compose.functional;
+import std.stdio;
 import std.algorithm;
-import std.conv, std.datetime;
-
-enum LENGTH = 100000;
-float [LENGTH] a;
-
-void test () {
-    auto b = Map!"2.3 * a" (a);    
-    auto v = b[0];
-}
+import std.functional;
 
 void main() {
-    CLContext.instance.init ();
-    foreach (it ; 0 .. LENGTH) {
-	a [it] = it;
+
+    alias un = binaryFun!"a < b ? a : ";
+    static assert (un (int.init, true));
+    
+    static if (_ctfeMatchUnary ("a &", "a")) {
+	static assert (false);
     }
+
+    writeln (all!"a & 1"([1, 3]));
     
-    auto r = benchmark!test (100);
-    auto res = to!Duration (r[0]);
-    writeln ("time ", res);
-    
-    /*    foreach (it ; b) {
-	writeln (it);
-	}*/
 }

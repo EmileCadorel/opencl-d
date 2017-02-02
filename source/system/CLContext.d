@@ -9,8 +9,12 @@ import std.conv;
 class CLContext {
 
     private enum DEVICE = CL_DEVICE_TYPE_DEFAULT;
+
+    static void init () {
+	CLContext.instance._init ();
+    }
     
-    void init () {	
+    private void _init () {	
 	DerelictCL.load ();
 	this.initDevices ();
 	this.initContext ();
