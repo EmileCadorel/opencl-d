@@ -8,3 +8,5 @@ dopencl
 sample/Map/map
 sample/Generate/generate
 *.a
+sample/vecadd/vecadd
+sample/Reduce/reduce

@@ -20,6 +20,14 @@ class Kernel {
 	CLContext.checkError (err);
     }
 
+    void callWithLocalSize (Args ...) (ulong dimGrid, ulong dimBlock, ulong localSize, Args args) {
+	this.passArguments (args, 0);
+	clSetKernelArg (this._kernel, args.length, localSize, null);
+	auto globalSize = dimGrid * dimBlock;
+	auto err = clEnqueueNDRangeKernel (this._device.commands, this._kernel, 1, null, &globalSize, &dimBlock, 0, null, null);
+	CLContext.checkError (err);	
+    }
+    
     void join () {
 	auto err = clFinish (this._device.commands);
 	CLContext.checkError (err);

@@ -8,7 +8,6 @@ import std.functional;
 class Map (string op) : Skeleton {
    
     static Vector!T opCall (T) (T [] a) {
-	auto test = unaryFun !op (T.init);
 	
 	if (!CLContext.instance.isInit) {
 	    CLContext.init ();
@@ -18,16 +17,22 @@ class Map (string op) : Skeleton {
 	auto in_a = new Vector!T (device, a);
 	auto out_b = new Vector!T (device, a.length);
 	
-	auto kern = createKernel!(T.stringof) (device);
+	auto kern = createKernel!(T, T.stringof) (device);
 	lauchKern (device, kern, in_a, out_b);
 	return out_b;
     }
     
     private {
 
-	static Kernel createKernel (string type) (Device device) {
+	static Kernel createKernel (T, string type) (Device device) {
 	    auto it = (type ~ op) in __maps__;
 	    if (it !is null) return *it;
+
+	    // verification que op est un operateur unaire sur 'a'
+	    // is est vrai si typeof est un type valide
+	    static if (!is (typeof (unaryFun !(op, "a") (T.init))))
+		static assert (false, "(" ~ op ~ ") n'est pas un operateur unaire sur 'a'");
+	    
 	    immutable auto code = generateProto !(type) ~ generateBody !(toIndexable !("", op));
 	    auto kern = new Kernel (device, code, "map");	
 	    __maps__ [type ~ op] = kern;
@@ -56,8 +61,6 @@ class Map (string op) : Skeleton {
 	
 	static string toIndexable (string begin, string end) () {
 	    static if (end.length == 0) {
-		static if (begin.indexOf ('a') == -1)
-		    static assert (false, "a necessaire dans le lambda");
 		return begin;
 	    } else if (end [0] == 'a') {
 		return toIndexable! (begin ~ end [0] ~ " [idx]", end [1 .. $]);

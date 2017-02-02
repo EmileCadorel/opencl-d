@@ -6,7 +6,7 @@ import std.datetime, std.conv;
 enum LENGTH = 10000;
 
 void test () {
-    auto a = Generate!("i * 4.1", float) (LENGTH);
+    auto a = Generate!("i * 2.2", float) (LENGTH);
     auto b = a[0]; // On recupere les données sur le cpu.   
 }
 

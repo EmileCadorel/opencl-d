@@ -9,7 +9,6 @@ import std.math;
 class Generate (string op, T) : Skeleton {
 
     static Vector!T opCall (ulong size) {
-	auto test = unaryFun ! (op, "i") (T.init);
 	if (!CLContext.instance.isInit) {
 	    CLContext.init ();
 	}
@@ -26,6 +25,12 @@ class Generate (string op, T) : Skeleton {
 	static Kernel createKernel (string type) (Device device) {
 	    auto it = (type ~ op) in __generates__;
 	    if (it !is null) return *it;
+	    
+	    // verification que op est un operateur unaire sur 'i'
+	    // is est vrai si typeof est un type valide
+	    static if (!is (typeof (unaryFun !(op, "i") (T.init))))
+		static assert (false, "(" ~ op ~ ") n'est pas un operateur unaire sur 'i'");
+	    
 	    immutable auto code = generateProto!(type) ~ generateBody!(op);
 	    auto kern = new Kernel (device, code, "generate");
 	    __generates__ [type ~ op] = kern;
