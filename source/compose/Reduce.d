@@ -6,31 +6,6 @@ import system.Kernel, system.CLContext;
 import std.functional;
 import std.math;
 
-/*
-__global__ void total(float * input, float * output, int len) {
-  __shared__ float partialSum[2 * 1024];
-  unsigned int t = threadIdx.x, start = 2 * blockIdx.x * blockDim.x;
-    
-    if (start + t < len)
-       partialSum[t] = input[start + t];
-    else
-      partialSum[t] = 0;
-    if (start + blockDim.x + t < len)
-      partialSum[blockDim.x + t] = input[start + blockDim.x + t];
-    else
-       partialSum[blockDim.x + t] = 0;
-
-    for (unsigned int stride = blockDim.x; stride >= 1; stride >>= 1) {
-       __syncthreads();
-       if (t < stride)
-          partialSum[t] += partialSum[t+stride];
-    }
-
-    if (t == 0)
-       output[blockIdx.x] = partialSum[0];
-}
-*/
-
 immutable string reduceBody = q{
     {
 	unsigned int t = get_local_id (0), start = 2 * get_group_id (0) * get_local_size (0);
@@ -53,8 +28,6 @@ immutable string reduceBody = q{
     }
 };
 
-
-
 class Reduce (string op) : Skeleton {
 
     static T opCall (T) (T [] a) {
@@ -69,12 +42,18 @@ class Reduce (string op) : Skeleton {
 	return launchKern (device, kern, in_a);
     }
 
+    static T opCall (T) (Vector!T a) {
+	auto device = CLContext.instance.devices [0];	
+	auto kern = createKernel!(T, T.stringof) (device);
+	return launchKern (device, kern, a);
+    }
+
+    
     private {
 	static Kernel createKernel (T, string type) (Device device) {
 	    auto it  = (type ~ op) in __reduces__;
 	    if (it !is null) return *it;
 	    immutable auto code = generateProto !(type) ~ generateBody !(toIndexable !("", op));
-	    //static assert (false, code);
 	    auto kern = new Kernel (device, code, "reduce");
 	    __reduces__ [type ~ op] = kern;
 	    return kern;

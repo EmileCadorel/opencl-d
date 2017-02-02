@@ -14,6 +14,13 @@ class Vector (T) : Passable {
 	this._device = device;
 	this._h_datas = data;
     }
+
+    ref T[] local () {
+	if (!this._isLocal) {
+	    this.copyToLocal ();
+	}
+	return this._h_datas;
+    }
     
     ref T opIndex (ulong index) {
 	if (!this._isLocal) {

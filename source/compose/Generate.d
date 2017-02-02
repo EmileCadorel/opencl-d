@@ -18,23 +18,25 @@ class Generate (string op, T) : Skeleton {
 	auto kern = createKernel !(T.stringof) (device);
 	launchKern (device, kern, out_a);
 	return out_a;
-    }
-
+    }    
+    
     private {
 
 	static Kernel createKernel (string type) (Device device) {
 	    auto it = (type ~ op) in __generates__;
 	    if (it !is null) return *it;
+	    bool bin = false;
 	    
 	    // verification que op est un operateur unaire sur 'i'
 	    // is est vrai si typeof est un type valide
-	    static if (!is (typeof (unaryFun !(op, "i") (T.init))))
-		static assert (false, "(" ~ op ~ ") n'est pas un operateur unaire sur 'i'");
+	    static if (!is (typeof (unaryFun !(op, "i") (T.init)))) 
+	    	static if (!is (typeof (binaryFun!(op, "i", "n") (T.init, ulong.init))))
+	    	    static assert (false, "(" ~ op ~ ") n'est pas un operateur unaire sur 'i', ni un operateur binaire pour 'i' et 'n'");
 	    
 	    immutable auto code = generateProto!(type) ~ generateBody!(op);
 	    auto kern = new Kernel (device, code, "generate");
 	    __generates__ [type ~ op] = kern;
-	    return kern;
+	    return kern;	    
 	}
 
 	// (N + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK, THREADS_PER_BLOCK
@@ -47,21 +49,19 @@ class Generate (string op, T) : Skeleton {
 
 	static string generateProto (string type) () {
 	    return format (q{
-		    __kernel void generate (__global %s *a, unsigned long count)
+		    __kernel void generate (__global %s *a, unsigned long n)
 			}, type);
 	}
 	
 	static string generateBody (string op) () {
 	    return format ("{\n\t%s;\n\t%s %s%s;\n}",
 			   q{int i = get_global_id (0);},
-			   q{if (i < count) },
+			   q{if (i < n) },
 			   q{a[i] = },
 			   op);
-			   
 	}
 
-	static Kernel [string] __generates__;
-	
+       	static Kernel [string] __generates__;	
     }    
     
 }
