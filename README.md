@@ -5,12 +5,13 @@ Exemple d'un vec_add.
 import system.CLContext, system.Kernel;
 import data.Vector;
 
-string KernelSource = 
-    "__kernel void vadd (__global const float * a, __global const float * b, __global float * out, unsigned int count) {" 
-    "int i = get_global_id (0);"    
-    "if (i < count)"							
-    "out [i] = a[i] + b[i];    "					
-     "}\n";
+string KernelSource = q{
+    __kernel void vadd (__global const float * a, __global const float * b, __global float * out, unsigned int count) {
+        int i = get_global_id (0);    
+        if (i < count)				
+            out [i] = a[i] + b[i];    				
+     }
+};
 
 
 enum LENGTH = 8 * 1024;
