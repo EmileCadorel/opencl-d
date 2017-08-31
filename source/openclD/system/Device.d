@@ -7,7 +7,6 @@ class Device {
     this (cl_device_id id) {
 	this._id = id;
     }
-
     void init (cl_context context) {
 	cl_int err;	
 	this._commands = clCreateCommandQueue (context, this._id, 0, &err);

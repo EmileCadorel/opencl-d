@@ -69,7 +69,7 @@ class Vector (T) : Passable {
     }
     
 
-    private void copyToLocal () {
+    void copyToLocal () {
 	auto err = clEnqueueReadBuffer (this._device.commands,
 					this._d_datas,
 					this._isBlocking ? CL_TRUE : CL_FALSE,

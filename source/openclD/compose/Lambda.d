@@ -3,11 +3,11 @@ import std.traits;
 
 template Lambda (alias Fun, string fun) {
 
-    string toString () {
+    static string toString () {
 	return fun;
     }
     
-    auto call (T ...) (T values) {
+    static auto call (T ...) (T values) {
 	static if (is (ReturnType!(Fun) == void)) {
 	    Fun (values);
 	} else {
