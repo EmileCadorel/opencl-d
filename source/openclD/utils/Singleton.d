@@ -1,4 +1,4 @@
-module utils.Singleton;
+module openclD.utils.Singleton;
 
 /**
  Template Singleton pour permettre la génération simple de classe Singleton

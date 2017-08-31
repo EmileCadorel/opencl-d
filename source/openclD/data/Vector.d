@@ -1,13 +1,28 @@
-module data.Vector;
-import system.CLContext;
-import system.Device;
-import data.Passable;
+module openclD.data.Vector;
+import openclD.system.CLContext;
+import openclD.system.Device;
+import openclD.data.Passable;
 
 class Vector (T) : Passable {
 
+    T[] alloc (T) (ulong size) {
+	import core.memory;
+	return (cast (T*) GC.malloc (size * T.sizeof)) [0 .. size];
+    }
+    
+    this (ulong size) {
+	this._device = CLContext.instance.devices [0];
+	this._h_datas = alloc!T (size);
+    }
+
+    this (T [] data) {
+	this._device = CLContext.instance.devices [0];
+	this._h_datas = data;
+    }
+    
     this (Device device, ulong size) {
 	this._device = device;
-	this._h_datas.length = size;
+	this._h_datas = alloc!T (size);
     }
 
     this (Device device, T [] data) {
@@ -108,6 +123,12 @@ class Vector (T) : Passable {
 	CLContext.checkError (err);
     }
 
+    override string toString () {
+	import std.conv;
+	if (!this._isLocal) this.copyToLocal ();
+	return this._h_datas.to!string;
+    }
+    
     
     ~this () {
 	if (this._d_datas) {

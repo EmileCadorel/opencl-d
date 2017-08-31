@@ -1,5 +1,5 @@
-module system.Device;
-import system.CLContext;
+module openclD.system.Device;
+import openclD.system.CLContext;
 import std.array;
 
 class Device {

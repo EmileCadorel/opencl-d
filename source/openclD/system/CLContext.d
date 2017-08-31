@@ -1,8 +1,8 @@
-module system.CLContext;
+module openclD.system.CLContext;
 public import derelict.opencl.cl;
-import system.Device;
-import utils.Singleton;
-import system.exception;
+import openclD.system.Device;
+import openclD.utils.Singleton;
+import openclD.system.exception;
 import std.conv;
 
 
@@ -36,6 +36,7 @@ class CLContext {
     }
     
     Device [] devices () {
+	if (!this._isInit) this._init ();
 	return this._devices;
     }
     

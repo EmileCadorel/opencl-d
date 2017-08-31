@@ -1,8 +1,6 @@
-module compose.Map;
+module openclD.compose.Map;
 import std.string, std.stdio, std.conv;
-import compose.Skeleton;
-import data.Vector, system.Device;
-import system.Kernel, system.CLContext;
+import openclD._;
 import std.functional;
 
 class Map (string op) : Skeleton {

@@ -1,4 +1,4 @@
-module system.exception;
+module openclD.system.exception;
 import derelict.opencl.cl;
 import std.format;
 

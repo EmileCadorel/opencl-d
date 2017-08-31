@@ -1,17 +1,21 @@
-module system.Kernel;
-import system.CLContext, system.Device;
-import system.exception;
+module openclD.system.Kernel;
+import openclD._;
+import openclD.system.exception;
 import std.conv, std.string;
-import data.Passable;
 
 class Kernel {
 
+    this (string src, string kern) {
+	this._device = CLContext.instance.devices [0];
+	this._kernName = kern;
+	this.initProgram (src);
+    }
+    
     this (Device device, string src, string kern) {
 	this._device = device;
 	this._kernName = kern;
 	this.initProgram (src);
     }
-
 
     void opCall (Args...) (ulong dimGrid, ulong dimBlock, Args args) {
 	this.passArguments (args, 0);
@@ -45,7 +49,6 @@ class Kernel {
     }
 
     private void passArguments () (uint) {}
-
     
     private void initProgram (string src) {
 	auto aux = toCharPtr (src);

@@ -1,8 +1,6 @@
-module compose.Generate;
-import compose.Skeleton;
+module openclD.compose.Generate;
+import openclD._;
 import std.string, std.conv;
-import data.Vector, system.Device;
-import system.Kernel, system.CLContext;
 import std.functional;
 import std.math;
 

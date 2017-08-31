@@ -1,8 +1,6 @@
-module compose.Reduce;
+module openclD.compose.Reduce;
 import std.string, std.stdio, std.conv;
-import compose.Skeleton;
-import data.Vector, system.Device;
-import system.Kernel, system.CLContext;
+import openclD._;
 import std.functional;
 import std.math;
 

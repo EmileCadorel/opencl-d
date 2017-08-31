@@ -1,13 +1,12 @@
-import system.CLContext, system.Kernel;
-import data.Vector;
+import openclD._;
 import core.stdc.stdio;
 import core.stdc.stdlib;
 import std.format, std.stdio;
 import std.datetime, std.conv;
-import compose.Skeleton;
+
 
 string KernelSource =  q{
-    __kernel void vadd (__global const float * a, __global const float * b, __global float * out, unsigned int count) {
+    __kernel void vadd (__global const #(T0) * a, __global const #(T0) * b, __global #(T0) * out, unsigned int count) {
 	int i = get_global_id (0);    
 	if (i < count)							
 	    out [i] = a[i] + b[i];    					
@@ -18,10 +17,11 @@ enum LENGTH = 8 * 1024;
 
 void main() {
     CLContext.instance.init ();
+
+    auto pkern = new PreKernel (KernelSource, "vadd");
+    pkern.feed (0, "float");    
     
-    auto kern = new Kernel (CLContext.instance.devices [0],
-			      KernelSource,
-			      "vadd");
+    auto kern = pkern.compile (CLContext.instance.devices [0]);
 
     auto dev = CLContext.instance.devices [0];    
     auto a = new Vector!float (dev, LENGTH);
