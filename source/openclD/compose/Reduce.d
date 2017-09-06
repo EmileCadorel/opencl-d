@@ -46,6 +46,9 @@ class Reduce (string op) : Skeleton {
 	return launchKern (device, kern, a);
     }
 
+    static T opCall (T) (Vector!T a, Kernel kern) {
+	return launchKern (kern.device, kern, a);
+    }
     
     private {
 	static Kernel createKernel (T, string type) (Device device) {

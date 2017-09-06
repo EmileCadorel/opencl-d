@@ -76,7 +76,10 @@ class Kernel {
 	return cstr [0 .. data.length + 1].dup.ptr;
     }
     
-
+    Device device () {
+	return this._device;
+    }
+    
     private cl_program _program;
     private Device _device;    
     private cl_kernel _kernel;
