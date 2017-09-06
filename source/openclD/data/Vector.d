@@ -10,10 +10,14 @@ class Vector (T) : Passable {
 	return (cast (T*) GC.malloc (size * T.sizeof)) [0 .. size];
     }
     
-    this (ulong size) {
+    this (ulong size, bool local = true) {
 	this._device = CLContext.instance.devices [0];
-	this._h_datas = alloc!T (size);
 	this._size = size;
+	if (local) this._h_datas = alloc!T (size);
+	else {
+	    this._isLocal = false;
+	    this.allocDeviceData ();
+	}
     }
 
     this (T [] data) {
@@ -128,7 +132,7 @@ class Vector (T) : Passable {
 	cl_int err;
 	this._d_datas = clCreateBuffer (CLContext.instance.context,
 					this._mode,
-					T.sizeof * this._h_datas.length,
+					T.sizeof * this._size,
 					null,
 					&err);
 	
