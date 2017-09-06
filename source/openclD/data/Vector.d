@@ -13,21 +13,25 @@ class Vector (T) : Passable {
     this (ulong size) {
 	this._device = CLContext.instance.devices [0];
 	this._h_datas = alloc!T (size);
+	this._size = size;
     }
 
     this (T [] data) {
 	this._device = CLContext.instance.devices [0];
 	this._h_datas = data;
+	this._size = data.length;
     }
     
     this (Device device, ulong size) {
 	this._device = device;
 	this._h_datas = alloc!T (size);
+	this._size = size;
     }
 
     this (Device device, T [] data) {
 	this._device = device;
 	this._h_datas = data;
+	this._size = data.length;
     }
 
     ref T[] local () {
@@ -52,11 +56,14 @@ class Vector (T) : Passable {
     }
 
     const (ulong) length () {
-	return this._h_datas.length;
+	return this._size;
     }
 
     void length (ulong length) {
-	this._h_datas.length = length;
+	if (this._h_datas)
+	    this._h_datas.length = length;
+	this._size = length;
+	
 	if (this._d_datas) 
 	    clReleaseMemObject (this._d_datas);
 	allocDeviceData ();
@@ -70,6 +77,7 @@ class Vector (T) : Passable {
     
 
     void copyToLocal () {
+	if (!this._h_datas) this._h_datas = alloc!T (this._size);
 	auto err = clEnqueueReadBuffer (this._device.commands,
 					this._d_datas,
 					this._isBlocking ? CL_TRUE : CL_FALSE,
@@ -85,7 +93,7 @@ class Vector (T) : Passable {
     }
 
 
-    private void copyToDevice () {
+    void copyToDevice () {
 	if (this._d_datas is null) this.allocDeviceData ();	
 	cl_int err = clEnqueueWriteBuffer (this._device.commands,
 			      this._d_datas,
@@ -101,6 +109,10 @@ class Vector (T) : Passable {
 	this._isLocal = false;
     }
 
+    void clearLocal () {
+	this._h_datas = null;
+    }
+    
     int opApply (scope int delegate (ref T) dg) {
 	if (!this._isLocal) this.copyToLocal ();
 	auto result = 0;
@@ -143,5 +155,5 @@ class Vector (T) : Passable {
     private Device _device;
     private cl_mem_flags _mode = CL_MEM_READ_ONLY;
     private bool _isBlocking = true;
-    
+    private ulong _size;
 }

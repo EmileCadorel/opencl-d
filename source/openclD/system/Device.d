@@ -15,7 +15,10 @@ class Device {
 	err = clGetDeviceInfo (this._id, CL_DEVICE_MAX_WORK_GROUP_SIZE, size_t.sizeof, &this._gridSize, null);
 	CLContext.checkError (err);
 
-	err = clGetDeviceInfo (this._id, CL_DEVICE_MAX_WORK_ITEM_SIZES, this._blockSize.sizeof, this._blockSize.ptr, null);
+	err = clGetDeviceInfo (this._id, CL_DEVICE_MAX_WORK_ITEM_SIZES, this._blockSize.sizeof, this._blockSize.ptr, null);	
+	CLContext.checkError (err);
+
+	err = clGetDeviceInfo (this._id, CL_DEVICE_GLOBAL_MEM_SIZE, size_t.sizeof, &this._memSize, null);	
 	CLContext.checkError (err);	
     }
             
@@ -35,9 +38,14 @@ class Device {
 	return this._gridSize;
     }    
 
+    size_t memSize () {
+	return this._memSize;
+    }
+    
     private cl_device_id _id;
     private cl_command_queue _commands;
     private size_t [3] _blockSize;
     private size_t _gridSize;
+    private size_t _memSize;
     
 }
